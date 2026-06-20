@@ -3,7 +3,6 @@
 A comprehensive full-stack healthcare application featuring real-time doctor-patient communication, an intelligent voice-enabled AI assistant, and live medication syncing. 
 
 This project bridges the gap between healthcare providers and patients through real-time WebSockets and advanced LLM integrations (Groq/OpenRouter), supporting seamless bilingual (English and Hindi) voice interactions.
-
 ---
 
 ## ✨ Key Features
