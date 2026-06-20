@@ -1,41 +1,24 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { MessageSquare, Eye } from "lucide-react";
-import { Patient } from "../types";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
+import { Patient, Medication } from "../types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import AddMedicationDialog from "./AddMedicationDialog";
 
 interface PatientTableProps {
   patients: Patient[];
   onSelectPatient: (patient: Patient) => void;
+  onAddMedication: (patientId: string, medication: Medication) => void;
 }
 
-export default function PatientTable({ patients, onSelectPatient }: PatientTableProps) {
+export default function PatientTable({ patients, onSelectPatient, onAddMedication }: PatientTableProps) {
+  
   const getAdherenceColor = (rate: number) => {
     if (rate >= 90) return "bg-green-500";
     if (rate >= 75) return "bg-yellow-500";
     return "bg-red-500";
-  };
-
-  const getAdherenceVariant = (rate: number): "default" | "secondary" | "destructive" => {
-    if (rate >= 90) return "default";
-    if (rate >= 75) return "secondary";
-    return "destructive";
   };
 
   return (
@@ -56,14 +39,7 @@ export default function PatientTable({ patients, onSelectPatient }: PatientTable
             <TableRow key={patient.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {patient.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar><AvatarFallback>{patient.name.charAt(0)}</AvatarFallback></Avatar>
                   <div>
                     <div className="font-medium">{patient.name}</div>
                     <div className="text-sm text-gray-500">{patient.email}</div>
@@ -71,108 +47,63 @@ export default function PatientTable({ patients, onSelectPatient }: PatientTable
                 </div>
               </TableCell>
               <TableCell>{patient.age}</TableCell>
-              <TableCell>
-                <Badge variant="outline">{patient.bloodType}</Badge>
-              </TableCell>
+              <TableCell><Badge variant="outline">{patient.bloodType}</Badge></TableCell>
               <TableCell>
                 <div className="space-y-1">
                   {patient.medications.slice(0, 2).map((med) => (
-                    <div key={med.id} className="text-sm">
-                      {med.name} - {med.dosage}
-                    </div>
+                    <div key={med.id} className="text-sm">{med.name}</div>
                   ))}
-                  {patient.medications.length > 2 && (
-                    <div className="text-sm text-gray-500">
-                      +{patient.medications.length - 2} more
-                    </div>
-                  )}
+                  {patient.medications.length > 2 && <div className="text-sm text-gray-500">+{patient.medications.length - 2} more</div>}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${getAdherenceColor(
-                        patient.adherenceRate
-                      )}`}
-                      style={{ width: `${patient.adherenceRate}%` }}
-                    />
+                    <div className={`h-2 rounded-full ${getAdherenceColor(patient.adherenceRate)}`} style={{ width: `${patient.adherenceRate}%` }} />
                   </div>
-                  <Badge variant={getAdherenceVariant(patient.adherenceRate)}>
-                    {patient.adherenceRate}%
-                  </Badge>
+                  <Badge>{patient.adherenceRate}%</Badge>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
+                      <Button variant="outline" size="sm"><Eye className="w-4 h-4 mr-1" /> View</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>{patient.name}</DialogTitle>
-                        <DialogDescription>Patient Details</DialogDescription>
+                        <DialogTitle>{patient.name}'s File</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Email</p>
-                            <p>{patient.email}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Phone</p>
-                            <p>{patient.phone}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Age</p>
-                            <p>{patient.age} years</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Gender</p>
-                            <p>{patient.gender}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Blood Type</p>
-                            <p>{patient.bloodType}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Adherence</p>
-                            <p>{patient.adherenceRate}%</p>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                          <div><p className="text-sm text-gray-500">Phone</p><p>{patient.phone}</p></div>
+                          <div><p className="text-sm text-gray-500">Medical History</p><p>{patient.medicalHistory}</p></div>
                         </div>
+                        
+                        {/* MEDICATION SECTION WITH ADD BUTTON */}
                         <div>
-                          <p className="text-sm font-medium text-gray-500 mb-2">Medical History</p>
-                          <p className="text-sm bg-gray-50 p-3 rounded">{patient.medicalHistory}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 mb-2">Medications</p>
-                          <div className="space-y-2">
+                          <div className="flex items-center justify-between mb-4 mt-6 border-t pt-4">
+                            <p className="font-semibold text-lg text-gray-800">Prescribed Medications</p>
+                            <AddMedicationDialog patientId={patient.id} onAdd={(med) => onAddMedication(patient.id, med)} />
+                          </div>
+                          <div className="space-y-3">
                             {patient.medications.map((med) => (
-                              <div key={med.id} className="flex items-center gap-3 p-2 border rounded">
-                                <img src={med.imageUrl} alt={med.name} className="w-12 h-12 rounded object-cover" />
+                              <div key={med.id} className="flex items-center gap-4 p-3 border rounded-lg bg-white shadow-sm">
+                                <img src={med.imageUrl} alt={med.name} className="w-16 h-16 rounded-md object-cover border" />
                                 <div className="flex-1">
-                                  <p className="font-medium">{med.name}</p>
-                                  <p className="text-sm text-gray-500">{med.dosage} - {med.frequency}</p>
+                                  <p className="font-bold text-gray-900">{med.name} <span className="font-normal text-sm text-gray-500">({med.dosage})</span></p>
+                                  <p className="text-sm text-gray-600">{med.frequency} • {med.instructions}</p>
                                 </div>
                               </div>
                             ))}
+                            {patient.medications.length === 0 && <p className="text-sm text-gray-500">No medications prescribed yet.</p>}
                           </div>
                         </div>
+
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => onSelectPatient(patient)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    Chat
-                  </Button>
+                  <Button size="sm" onClick={() => onSelectPatient(patient)}><MessageSquare className="w-4 h-4 mr-1" /> Chat</Button>
                 </div>
               </TableCell>
             </TableRow>

@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -6,16 +8,37 @@ import { LogOut, Pill, MessageSquare, Calendar, Activity } from "lucide-react";
 import MedicationCard from "../components/MedicationCard";
 import ChatPanel from "../components/ChatPanel";
 import { mockMedications, mockPatients } from "../data/mockData";
-import { Medication, Patient } from "../types";
+import { Patient, Medication } from "../types";
 import { Toaster } from "../components/ui/sonner";
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
+  
   // Using the first patient as the logged-in user
   const [currentPatient, setCurrentPatient] = useState<Patient>({
     ...mockPatients[0],
     medications: mockMedications,
   });
+
+  // NEW: Listen for real-time medication additions from the Doctor
+  useEffect(() => {
+    if (!currentPatient.id) return;
+    
+    const socket = io("http://localhost:5000");
+    socket.emit("join_room", currentPatient.id);
+
+    socket.on("new_medication", (medication: Medication) => {
+      setCurrentPatient(prev => ({
+        ...prev, 
+        medications: [medication, ...prev.medications]
+      }));
+      toast.success(`Your doctor prescribed a new medicine: ${medication.name}!`);
+    });
+
+    return () => { 
+      socket.disconnect(); 
+    };
+  }, [currentPatient.id]);
 
   const handleLogout = () => {
     navigate("/");

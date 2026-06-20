@@ -119,11 +119,22 @@ export default function DoctorDashboard() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="patients">
-                    <PatientTable
+<PatientTable
                       patients={patients}
                       onSelectPatient={(patient) => {
                         setSelectedPatient(patient);
                         setActiveTab("chat");
+                      }}
+                      onAddMedication={(patientId, medication) => {
+                         // Update local doctor UI
+                         setPatients(patients.map(p => 
+                           p.id === patientId ? { ...p, medications: [medication, ...p.medications] } : p
+                         ));
+                         // Send to patient globally
+                         import("socket.io-client").then(({ io }) => {
+                           const socket = io("http://localhost:5000");
+                           socket.emit("add_medication", { patientId, medication });
+                         });
                       }}
                     />
                   </TabsContent>
